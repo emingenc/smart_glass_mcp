@@ -1,30 +1,29 @@
 {
-  "name": "next.js-mcp-server",
-  "version": "0.1.0",
-  "private": true,
+  "name": "mentraos-cloud-example-app",
+  "version": "1.0.0",
+  "main": "index.js",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "type-check": "tsc --noEmit",
-    "lint": "eslint ."
+    "start": "bun src/index.ts",
+    "dev": "bun --hot src/index.ts",
+    "docker:build": "docker build -f docker/Dockerfile -t mentra-glass-mcp .",
+    "docker:up": "docker-compose -f docker/docker-compose.yml up",
+    "docker:down": "docker-compose -f docker/docker-compose.yml down",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "dependencies": {
-    "mcp-handler": "^1.0.1",
-    "next": "^15.2.6",
-    "react": "^19.1.0",
-    "react-dom": "^19.1.0",
-    "redis": "^4.7.0",
-    "zod": "^3.24.2"
+    "@mentra/sdk": "latest",
+    "@modelcontextprotocol/sdk": "^1.25.1",
+    "express": "^4.21.2",
+    "ws": "^8.18.1",
+    "zod": "^4.3.4"
   },
   "devDependencies": {
-    "@eslint/compat": "^2.0.0",
-    "@eslint/eslintrc": "^3.3.3",
-    "@types/node": "^20",
-    "@types/react": "^19",
-    "eslint": "^9",
-    "eslint-config-next": "^15.2.6",
-    "typescript": "^5"
-  },
-  "packageManager": "pnpm@8.15.7+sha512.c85cd21b6da10332156b1ca2aa79c0a61ee7ad2eb0453b88ab299289e9e8ca93e6091232b25c07cbf61f6df77128d9c849e5c9ac6e44854dbd211c49f3a67adc"
+    "typescript": "^5.0.0",
+    "@types/express": "^5.0.1",
+    "@types/node": "^22.13.14",
+    "@types/ws": "^8.18.0"
+  }
 }

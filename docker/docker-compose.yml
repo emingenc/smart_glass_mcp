@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - MENTRA_INTERNAL_PORT=3099
+      - PACKAGE_NAME=${PACKAGE_NAME}
+      - MENTRAOS_API_KEY=${MENTRAOS_API_KEY}
+      - MCP_USER_TOKENS=${MCP_USER_TOKENS}
+      - MCP_ADMIN_TOKEN=${MCP_ADMIN_TOKEN}
+    volumes:
+      - ../src:/app/src
+    command: bun run --watch src/index.ts
