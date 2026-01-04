@@ -4,6 +4,8 @@ services:
     env: docker
     plan: free
     branch: main
+    dockerfilePath: docker/Dockerfile
+    dockerContext: .
     envVars:
       - key: PORT
         value: 3000
