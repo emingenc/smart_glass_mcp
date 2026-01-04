@@ -3,7 +3,9 @@
 To use Supabase as your storage backend:
 
 1.  **Create a Supabase Project** at [supabase.com](https://supabase.com).
-2.  **Run this SQL** in the SQL Editor to create the tokens table:
+2.  **Apply the Migration**:
+    *   **Option A (CLI)**: Run `npx supabase db push` to apply the local migration to your remote project (requires login via `npx supabase login`).
+    *   **Option B (Manual)**: Copy the SQL below and run it in the Supabase SQL Editor.
 
 ```sql
 create table tokens (

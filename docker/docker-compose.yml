@@ -16,4 +16,5 @@ services:
       - MCP_ADMIN_TOKEN=${MCP_ADMIN_TOKEN}
     volumes:
       - ../src:/app/src
+      - ../mcp.sqlite:/app/mcp.sqlite
     command: bun run --watch src/index.ts
