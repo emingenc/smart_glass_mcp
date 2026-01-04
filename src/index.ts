@@ -1,14 +1,15 @@
 import { config } from "./config/env";
 import { MentraService } from "./services/MentraService";
 import { sessionManager } from "./services/SessionManager";
+import { tokenService } from "./services/TokenService";
 import { ALL_TOOLS, executeTool } from "./tools";
 
 // --- User Token Management ---
 function getUserFromToken(token: string): string | null {
-  // Check direct token → email mapping
-  if (config.userTokens[token]) return config.userTokens[token];
-  // Allow email as token directly
-  if (token.includes("@")) return token;
+  // Check generated passphrase
+  const user = tokenService.validateToken(token);
+  if (user) return user;
+
   // Admin token sees all (for debugging)
   if (config.adminToken && token === config.adminToken) return "*";
   return null;
@@ -118,6 +119,16 @@ function createSSEStream(req: Request): Response {
 async function handleMCPRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
 
+  // OAuth discovery endpoint (tell VS Code we don't support OAuth)
+  if (url.pathname === "/.well-known/oauth-protected-resource") {
+    console.log("[OAuth] Well-known endpoint requested - no OAuth support");
+    return Response.json({
+      resource: "http://localhost:3000/mcp",
+      authorization_servers: [],
+      scopes_supported: []
+    });
+  }
+
   // Health check (no auth)
   if (url.pathname === "/health") {
     return Response.json({ 
@@ -145,12 +156,21 @@ async function handleMCPRequest(req: Request): Promise<Response> {
     }
 
     console.log(`[Auth] Header: ${auth}`);
+    console.log(`[Auth] All Headers:`, Object.fromEntries(req.headers.entries()));
     
     if (!token) {
-      console.log("[Auth] Missing or invalid header/param");
+      console.log("[Auth] Missing or invalid header/param - REJECTING");
+      // Return JSON-RPC error response, not HTTP error
       return Response.json(
-        { error: "Missing Authorization header or token param." },
-        { status: 401 }
+        { 
+          jsonrpc: "2.0", 
+          error: { 
+            code: -32001, 
+            message: "Authentication required. Provide Authorization: Bearer <token> header." 
+          }, 
+          id: null 
+        },
+        { status: 200 } // Return 200 OK with JSON-RPC error
       );
     }
 
@@ -159,10 +179,18 @@ async function handleMCPRequest(req: Request): Promise<Response> {
     console.log(`[Auth] User: ${userEmail}`);
 
     if (!userEmail) {
-      console.log("[Auth] Invalid token");
+      console.log("[Auth] Invalid token - REJECTING");
+      // Return JSON-RPC error response, not HTTP error
       return Response.json(
-        { error: "Invalid token. Use your Mentra email address as the Bearer token." },
-        { status: 401 }
+        { 
+          jsonrpc: "2.0", 
+          error: { 
+            code: -32002, 
+            message: "Invalid token. Check your Bearer token." 
+          }, 
+          id: null 
+        },
+        { status: 200 } // Return 200 OK with JSON-RPC error
       );
     }
 
@@ -244,10 +272,24 @@ async function proxyToMentra(req: Request): Promise<Response> {
 // --- Unified Request Handler ---
 async function handleRequest(req: Request): Promise<Response> {
   const url = new URL(req.url);
+
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
+        "Access-Control-Allow-Headers": "Content-Type, Authorization, Mcp-Session-Id",
+      },
+    });
+  }
   
-  // MCP endpoints
-  if (url.pathname === "/mcp" || url.pathname === "/health") {
-    return handleMCPRequest(req);
+  // MCP endpoints and discovery
+  if (url.pathname === "/mcp" || url.pathname === "/health" || url.pathname === "/.well-known/oauth-protected-resource") {
+    const response = await handleMCPRequest(req);
+    // Add CORS headers to response
+    response.headers.set("Access-Control-Allow-Origin", "*");
+    return response;
   }
   
   // Everything else goes to Mentra AppServer
@@ -257,8 +299,8 @@ async function handleRequest(req: Request): Promise<Response> {
 // --- Start ---
 async function main() {
   console.log("🚀 Starting Mentra Glass MCP Server...\n");
-  console.log("🔐 User Isolation: Each MCP client uses their email as Bearer token");
-  console.log("   Only sees/controls their own connected glasses\n");
+  console.log("🔐 User Isolation: Users authenticate via Mentra Webview");
+  console.log("   Each user gets a unique passphrase token\n");
 
   // Start Mentra AppServer on internal port
   const mentraApp = new MentraService();
@@ -279,8 +321,8 @@ async function main() {
   console.log(`   /*       - Mentra webhooks (proxied)`);
   console.log(`\n📋 Available Tools (user-scoped):`);
   ALL_TOOLS.forEach((t) => console.log(`   - ${t.name}`));
-  console.log(`\n🔑 Auth: Bearer <your-mentra-email>`);
-  console.log("   Example: Authorization: Bearer user@example.com");
+  console.log(`\n🔑 Auth: Open the Mentra App to get your Access Token`);
+  console.log("   Authorization: Bearer <your-token>");
   if (config.adminToken) console.log(`   Admin token configured for debugging`);
   console.log("\n✨ Ready! Use ngrok: ngrok http 3000\n");
 }
