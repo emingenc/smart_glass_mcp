@@ -18,4 +18,4 @@ services:
       - key: SUPABASE_SERVICE_KEY
         sync: false
       - key: DEBUG
-        sync: true
+        value: "false"
