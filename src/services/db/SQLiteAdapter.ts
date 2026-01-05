@@ -28,7 +28,6 @@ export class SQLiteAdapter implements DatabaseAdapter {
       if (fs.existsSync(tokenFile)) {
         try {
           const data = JSON.parse(fs.readFileSync(tokenFile, "utf-8"));
-          console.log("[SQLite] Migrating tokens from tokens.json...");
           const insert = this.db.prepare("INSERT INTO tokens (email, token, created_at) VALUES (?, ?, ?)");
           const now = Date.now();
           this.db.transaction(() => {
@@ -36,9 +35,8 @@ export class SQLiteAdapter implements DatabaseAdapter {
               insert.run(email, token as string, now);
             }
           })();
-          console.log(`[SQLite] Migrated ${Object.keys(data).length} tokens.`);
-        } catch (e) {
-          console.error("[SQLite] Migration failed:", e);
+        } catch {
+          // Silent fail - migration is optional
         }
       }
     }

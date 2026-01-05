@@ -16,8 +16,8 @@ export const audioTools = [
       if (!glasses) return { content: [{ type: "text", text: "⚠️ Your glasses are not connected." }] };
       
       // Don't await to avoid blocking MCP client if speech takes time
-      glasses.session.audio.speak(args.text).catch((e: any) => console.error(`Error speaking: ${e.message}`));
-      return { content: [{ type: "text", text: `🔊 Speaking on your glasses: "${args.text}"` }] };
+      glasses.session.audio.speak(args.text).catch(() => { /* silent fail */ });
+      return { content: [{ type: "text", text: `🔊 Speaking on your glasses` }] };
     }
   }
 ];

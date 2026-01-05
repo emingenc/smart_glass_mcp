@@ -13,6 +13,7 @@ const envSchema = z.object({
     }
   }).default("{}"),
   MCP_ADMIN_TOKEN: z.string().optional(),
+  DEBUG: z.string().transform((val) => val === "true" || val === "1").default("false"),
 });
 
 // Validate and export
@@ -25,4 +26,12 @@ export const config = {
   internalPort: env.MENTRA_INTERNAL_PORT,
   userTokens: env.MCP_USER_TOKENS as Record<string, string>,
   adminToken: env.MCP_ADMIN_TOKEN,
+  debug: env.DEBUG,
 };
+
+// Secure debug logger - never logs sensitive data
+export function debugLog(...args: any[]) {
+  if (config.debug) {
+    console.log("[DEBUG]", ...args);
+  }
+}

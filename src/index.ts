@@ -122,7 +122,6 @@ async function handleMCPRequest(req: Request): Promise<Response> {
 
   // OAuth discovery endpoint (tell VS Code we don't support OAuth)
   if (url.pathname === "/.well-known/oauth-protected-resource") {
-    console.log("[OAuth] Well-known endpoint requested - no OAuth support");
     return Response.json({
       resource: "http://localhost:3000/mcp",
       authorization_servers: [],
@@ -152,15 +151,10 @@ async function handleMCPRequest(req: Request): Promise<Response> {
       const urlToken = url.searchParams.get("token");
       if (urlToken) {
         token = urlToken;
-        console.log(`[Auth] Found token in query param`);
       }
     }
-
-    console.log(`[Auth] Header: ${auth}`);
-    console.log(`[Auth] All Headers:`, Object.fromEntries(req.headers.entries()));
     
     if (!token) {
-      console.log("[Auth] Missing or invalid header/param - REJECTING");
       // Return JSON-RPC error response, not HTTP error
       return Response.json(
         { 
@@ -175,12 +169,9 @@ async function handleMCPRequest(req: Request): Promise<Response> {
       );
     }
 
-    console.log(`[Auth] Token: ${token}`);
     const userEmail = await getUserFromToken(token);
-    console.log(`[Auth] User: ${userEmail}`);
 
     if (!userEmail) {
-      console.log("[Auth] Invalid token - REJECTING");
       // Return JSON-RPC error response, not HTTP error
       return Response.json(
         { 
@@ -301,14 +292,11 @@ async function handleRequest(req: Request): Promise<Response> {
 async function main() {
   await initDatabase();
 
-  console.log("🚀 Starting Mentra Glass MCP Server...\n");
-  console.log("🔐 User Isolation: Users authenticate via Mentra Webview");
-  console.log("   Each user gets a unique passphrase token\n");
+  console.log("🚀 Mentra Glass MCP Server starting...");
 
   // Start Mentra AppServer on internal port
   const mentraApp = new MentraService();
   await mentraApp.start();
-  console.log(`📱 Mentra AppServer: internal port ${config.internalPort}`);
 
   // Start unified Bun HTTP server on main port
   Bun.serve({
@@ -318,16 +306,7 @@ async function main() {
     idleTimeout: 255, // Keep SSE connections alive
   });
 
-  console.log(`\n🌐 Server running on: http://localhost:${config.port}`);
-  console.log(`   /mcp     - MCP JSON-RPC endpoint`);
-  console.log(`   /health  - Health check`);
-  console.log(`   /*       - Mentra webhooks (proxied)`);
-  console.log(`\n📋 Available Tools (user-scoped):`);
-  ALL_TOOLS.forEach((t) => console.log(`   - ${t.name}`));
-  console.log(`\n🔑 Auth: Open the Mentra App to get your Access Token`);
-  console.log("   Authorization: Bearer <your-token>");
-  if (config.adminToken) console.log(`   Admin token configured for debugging`);
-  console.log("\n✨ Ready! Use ngrok: ngrok http 3000\n");
+  console.log(`✨ Server ready on port ${config.port}`);
 }
 
 main().catch(console.error);

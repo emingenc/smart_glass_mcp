@@ -15,8 +15,6 @@ export async function executeTool(
   args: Record<string, any>,
   userEmail: string
 ): Promise<{ content: Array<{ type: string; text: string }>; isError?: boolean }> {
-  console.log(`🔧 Executing tool ${name} for user: ${userEmail}`);
-  
   const tool = ALL_TOOLS.find((t) => t.name === name);
   if (!tool) {
     throw new Error(`Unknown tool: ${name}`);
@@ -25,6 +23,6 @@ export async function executeTool(
   try {
     return await tool.handler(args, userEmail);
   } catch (e: any) {
-    return { content: [{ type: "text", text: `❌ Error: ${e.message}` }], isError: true };
+    return { content: [{ type: "text", text: `Error: ${e.message}` }], isError: true };
   }
 }

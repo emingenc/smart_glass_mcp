@@ -9,15 +9,11 @@ export class SupabaseAdapter implements DatabaseAdapter {
   }
 
   async init(): Promise<void> {
-    // In Supabase, tables are usually created via the dashboard or migrations.
-    // We can check if the connection works.
+    // Check if the connection works
     const { error } = await this.supabase.from('tokens').select('count', { count: 'exact', head: true });
     
     if (error) {
-      console.error("[Supabase] Connection check failed or table 'tokens' missing:", error.message);
-      console.log("[Supabase] Please ensure a table 'tokens' exists with columns: email (text, pk), token (text), created_at (int8)");
-    } else {
-      console.log("[Supabase] Connected successfully.");
+      throw new Error(`Supabase init failed: ${error.message}. Ensure 'tokens' table exists.`);
     }
   }
 
@@ -52,8 +48,7 @@ export class SupabaseAdapter implements DatabaseAdapter {
       );
 
     if (error) {
-      console.error("[Supabase] Failed to save token:", error);
-      throw error;
+      throw new Error(`Failed to save token: ${error.message}`);
     }
   }
 
@@ -63,7 +58,6 @@ export class SupabaseAdapter implements DatabaseAdapter {
       .select('*');
 
     if (error) {
-      console.error("[Supabase] Failed to get all tokens:", error);
       return [];
     }
 
