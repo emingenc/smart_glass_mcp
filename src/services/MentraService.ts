@@ -126,5 +126,19 @@ export class MentraService extends AppServer {
       debugLog(`Glasses disconnected: ${userId}`);
       sessionManager.removeSession(sessionId);
     });
+
+    // Handle capabilities update (NEW in SDK)
+    session.events.onCapabilitiesUpdate?.((data) => {
+      debugLog(`Capabilities updated [${userId}]:`, data.modelName);
+    });
+
+    // Handle SDK errors gracefully - ignore unknown message type errors from new cloud features
+    session.events.onError?.((error: Error) => {
+      if (error.message.includes("Unrecognized message type")) {
+        debugLog(`Ignoring known SDK issue: ${error.message}`);
+        return;
+      }
+      debugLog(`Session error: ${error.message}`);
+    });
   }
 }
